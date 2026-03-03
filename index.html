@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wireless Cable OTA Testing Configuration</title>
+    <style>
+        :root {
+            --ieee-blue: #004586;
+            --text-color: #333;
+            --bg-color: #f9f9f9;
+            --container-bg: #fff;
+        }
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: var(--ieee-blue);
+            color: white;
+            text-align: center;
+            padding: 2rem 1rem;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2rem;
+        }
+        header p {
+            margin: 0.5rem 0 0;
+            font-style: italic;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: var(--container-bg);
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        h2 {
+            color: var(--ieee-blue);
+            border-bottom: 2px solid var(--ieee-blue);
+            padding-bottom: 0.5rem;
+        }
+        .calculator-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+            align-items: start;
+        }
+        .controls {
+            background: #f1f5f9;
+            padding: 1.5rem;
+            border-radius: 6px;
+        }
+        .controls label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        .controls input {
+            width: 100%;
+            padding: 0.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .controls button {
+            background-color: var(--ieee-blue);
+            color: white;
+            border: none;
+            padding: 0.75rem 1rem;
+            width: 100%;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: background 0.3s;
+        }
+        .controls button:hover {
+            background-color: #003366;
+        }
+        #results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-family: Arial, sans-serif;
+            font-size: 0.9rem;
+        }
+        #results-table th, #results-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        #results-table th {
+            background-color: var(--ieee-blue);
+            color: white;
+        }
+        canvas {
+            width: 100%;
+            max-width: 600px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            display: block;
+            margin: 0 auto;
+        }
+        .tmpac-showcase {
+            text-align: center;
+            margin-top: 3rem;
+        }
+        .tmpac-showcase img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+    </style>
+    <script>
+        MathJax = {
+            tex: { inlineMath: [['$', '$']], displayMath: [['$$', '$$']] }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+</head>
+<body>
+
+<header>
+    <h1>Condition Number Minimization for Wireless Cable OTA Testing</h1>
+    <p>Chunhui Li, Hao Sun, and Wei Fan</p>
+    <p>Southeast University, Purple Mountain Laboratory</p>
+    <p>--- Interactive ULA Calculator &  Interactive UPA UV Space Region Showcase & TMPAC Architecture Showcase ---</p>
+</header>
+
+<div class="container">
+    <section>
+        <h2>Far-Field ULA Optimal Probe Calculator</h2>
+        <p>
+            Under the far-field plane-wave assumption, a Uniform Linear Array (ULA) can intrinsically achieve an ideal orthogonal channel 
+            (condition number $\kappa = 1$) by distributing probes at uniform Discrete Fourier Transform (DFT) grid points in the spatial frequency domain.
+        </p>
+        
+        <div class="calculator-grid">
+            <div class="controls">
+                <label for="antennasN">Number of ULA Elements ($N$):</label>
+                <input type="number" id="antennasN" min="2" max="64" value="4">
+                <button onclick="calculateAndDraw()">Calculate Optimal Angles</button>
+                
+                <table id="results-table">
+                    <thead>
+                        <tr>
+                            <th>Probe ($k$)</th>
+                            <th>Spatial Freq ($u_k$)</th>
+                            <th>Angle ($\phi_k$)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-body">
+                        </tbody>
+                </table>
+            </div>
+            
+            <div class="visualization">
+                <canvas id="ulaCanvas" width="600" height="400"></canvas>
+                <p style="text-align: center; font-size: 0.9rem; color: #666;">
+                    <em>Visualizing optimal probe angles on a semicircular dome.</em>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2>UPA: UV Space Visible / Invisible Region</h2>
+        <p>
+            For an $N_x \times N_y$ UPA, the ideal DFT grid spans $(u,v) \in [-0.5, 0.5]^2$. The physically realizable visible space is the circle $u^2 + v^2 \le 0.25$ (radius 0.5). 
+            When $N_x$ or $N_y > 3$, corner grid points fall into the invisible space where no physical probe angles exist.
+        </p>
+        <div class="calculator-grid">
+            <div class="controls">
+                <label for="upaNx">$N_x$ (rows):</label>
+                <input type="number" id="upaNx" min="2" max="16" value="3">
+                <label for="upaNy">$N_y$ (columns):</label>
+                <input type="number" id="upaNy" min="2" max="16" value="3">
+                <button onclick="drawUpaUvSpace()">Update UV Space</button>
+                <p id="upaStats" style="font-size: 0.85rem; margin-top: 1rem; color: #666;"></p>
+            </div>
+            <div class="visualization">
+                <canvas id="upaUvCanvas" width="400" height="400"></canvas>
+                <p style="text-align: center; font-size: 0.9rem; color: #666;">
+                    <em>Green: visible (inside circle); Red: invisible (outside circle).</em>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section class="tmpac-showcase">
+        <h2>Near-Field Telescopic Multi-Probe Anechoic Chamber (TMPAC)</h2>
+        <p style="text-align: left;">
+            To transcend the physical "invisible space" limitations of large-scale Uniform Planar Arrays (UPAs) in the far-field, 
+            the TMPAC leverages spherical wavefront curvature. By dynamically adjusting the radial distances 
+            via linear actuators, the TMPAC synthesizes a well-conditioned propagation matrix.
+        </p>
+        
+        <img id="tmpacGif" src="TMPAC15_animation.gif" alt="TMPAC Dynamic Showcase GIF" style="max-width: 400px; aspect-ratio: 1/1;">
+        
+        <p style="text-align: left; margin-top: 1rem;">
+            <em>The continuous radial tuning is driven by our Hybrid Relaxed-Discrete Optimization (HRDO) algorithm, 
+            utilizing an inverse-radial gradient flow to prevent vanishing gradients at large distances.</em>
+        </p>
+    </section>
+</div>
+
+<script>
+    function calculateAndDraw() {
+        const N = parseInt(document.getElementById('antennasN').value);
+        if (isNaN(N) || N < 2) {
+            alert("Please enter a valid number of antennas (N >= 2).");
+            return;
+        }
+
+        const tbody = document.getElementById('results-body');
+        tbody.innerHTML = ''; // Clear previous results
+        
+        const canvas = document.getElementById('ulaCanvas');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const cx = canvas.width / 2;
+        const cy = canvas.height - 50;
+        const radius = 250;
+
+        // Draw dome arc
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, Math.PI, 0);
+        ctx.strokeStyle = '#ddd';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Draw ULA line
+        ctx.beginPath();
+        ctx.moveTo(cx - 100, cy);
+        ctx.lineTo(cx + 100, cy);
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        let angles = [];
+
+        for (let k = 1; k <= N; k++) {
+            // Formula from Section III.B.1: uk = (k - (N+1)/2) / N
+            const uk = (k - (N + 1) / 2) / N;
+            // uk = (d/lambda) * sin(phi). Assuming d = lambda/2, sin(phi) = 2 * uk
+            const sinPhi = 2 * uk;
+            
+            // Check visibility limit (just in case, though ULA always fits)
+            if (Math.abs(sinPhi) > 1) {
+                console.error("Spatial frequency falls outside visible space!");
+                continue;
+            }
+
+            const phiRad = Math.asin(sinPhi);
+            const phiDeg = phiRad * (180 / Math.PI);
+            angles.push(phiRad);
+
+            // Populate Table
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${k}</td>
+                <td>${uk.toFixed(4)}</td>
+                <td>${phiDeg.toFixed(2)}°</td>
+            `;
+            tbody.appendChild(tr);
+
+            // Draw Probe Ray
+            // Canvas standard: 0 is right (x-axis). phi is from broadside (y-axis).
+            // So visual angle = -Math.PI/2 + phiRad
+            const visualAngle = -Math.PI/2 + phiRad;
+            const px = cx + radius * Math.cos(visualAngle);
+            const py = cy + radius * Math.sin(visualAngle);
+
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(px, py);
+            ctx.strokeStyle = 'rgba(0, 69, 134, 0.4)'; // IEEE Blue with transparency
+            ctx.setLineDash([5, 5]);
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.setLineDash([]); // Reset
+
+            // Draw Probe Point
+            ctx.beginPath();
+            ctx.arc(px, py, 6, 0, 2 * Math.PI);
+            ctx.fillStyle = '#004586';
+            ctx.fill();
+        }
+        
+        // Draw ULA Elements
+        const elementSpacing = 160 / (N > 1 ? N - 1 : 1);
+        const startX = cx - 80;
+        for (let n = 0; n < N; n++) {
+            ctx.beginPath();
+            // Draw triangles for antennas
+            const elX = startX + n * elementSpacing;
+            ctx.moveTo(elX, cy);
+            ctx.lineTo(elX - 6, cy + 12);
+            ctx.lineTo(elX + 6, cy + 12);
+            ctx.closePath();
+            ctx.fillStyle = '#d95319'; // Red-orange to match MATLAB plots
+            ctx.fill();
+        }
+    }
+
+    function drawUpaUvSpace() {
+        const Nx = parseInt(document.getElementById('upaNx').value) || 3;
+        const Ny = parseInt(document.getElementById('upaNy').value) || 3;
+        if (Nx < 2 || Ny < 2) {
+            alert("Please enter Nx, Ny >= 2.");
+            return;
+        }
+
+        const canvas = document.getElementById('upaUvCanvas');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const pad = 50;
+        const W = canvas.width - 2 * pad;
+        const H = canvas.height - 2 * pad;
+        const cx = pad + W / 2;
+        const cy = pad + H / 2;
+
+        // Map: u,v in [-0.5, 0.5] -> canvas. u to x, v to y (flip v)
+        function uvToCanvas(u, v) {
+            const x = cx + (u / 0.5) * (W / 2);
+            const y = cy - (v / 0.5) * (H / 2);
+            return [x, y];
+        }
+
+        const rVisible = 0.5; // radius of visible circle in UV domain
+
+        // 1. Draw invisible region: [-0.5,0.5]² square, then punch out circle
+        ctx.fillStyle = 'rgba(200, 200, 220, 0.5)';
+        ctx.fillRect(pad, pad, W, H);
+        ctx.fillStyle = 'rgba(180, 220, 180, 0.6)'; // visible: light green
+        ctx.beginPath();
+        ctx.arc(cx, cy, (rVisible / 0.5) * (W / 2), 0, 2 * Math.PI);
+        ctx.fill();
+
+        // 2. Draw axes
+        ctx.strokeStyle = '#666';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(pad, cy);
+        ctx.lineTo(pad + W, cy);
+        ctx.moveTo(cx, pad);
+        ctx.lineTo(cx, pad + H);
+        ctx.stroke();
+
+        // Axis labels
+        ctx.fillStyle = '#333';
+        ctx.font = '12px sans-serif';
+        ctx.fillText('u', pad + W - 15, cy - 5);
+        ctx.fillText('v', cx + 5, pad + 18);
+
+        // 3. Draw visible circle boundary
+        ctx.strokeStyle = '#004586';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx, cy, (rVisible / 0.5) * (W / 2), 0, 2 * Math.PI);
+        ctx.stroke();
+
+        // 4. DFT grid points: u_k = (k - (Nx+1)/2)/Nx, v_l = (l - (Ny+1)/2)/Ny
+        let visibleCount = 0;
+        let invisibleCount = 0;
+        const points = [];
+
+        for (let k = 1; k <= Nx; k++) {
+            const u = (k - (Nx + 1) / 2) / Nx;
+            for (let l = 1; l <= Ny; l++) {
+                const v = (l - (Ny + 1) / 2) / Ny;
+                const inside = (u * u + v * v <= 0.25);
+                if (inside) visibleCount++;
+                else invisibleCount++;
+                points.push({ u, v, inside });
+            }
+        }
+
+        const ptRad = 6;
+        points.forEach(p => {
+            const [x, y] = uvToCanvas(p.u, p.v);
+            ctx.beginPath();
+            ctx.arc(x, y, ptRad, 0, 2 * Math.PI);
+            ctx.fillStyle = p.inside ? '#2e7d32' : '#c62828';
+            ctx.fill();
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        });
+
+        // Stats
+        const total = Nx * Ny;
+        const pctInvisible = total > 0 ? (100 * invisibleCount / total).toFixed(1) : 0;
+        document.getElementById('upaStats').innerHTML = 
+            `Total: ${total} points &nbsp;|&nbsp; Visible: ${visibleCount} &nbsp;|&nbsp; Invisible: ${invisibleCount} (${pctInvisible}%)`;
+    }
+
+    // Initialize on load
+    window.onload = function() {
+        calculateAndDraw();
+        drawUpaUvSpace();
+    };
+
+    // GIF fallback: if tmpac.gif is missing or fails to load, replace with an embedded placeholder GIF
+    (function(){
+        const img = document.getElementById('tmpacGif');
+        if (!img) return;
+        img.onerror = function() {
+            // 1x1 transparent GIF as a lightweight placeholder (data URI)
+            img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+            img.alt = 'TMPAC placeholder GIF (embedded)';
+        };
+    })();
+</script>
+
+</body>
+</html>
